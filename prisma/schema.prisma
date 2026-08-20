@@ -1,0 +1,79 @@
+// Prisma schema — Car Dealership app
+// Dev: switch provider to "sqlite" and DATABASE_URL="file:./dev.db"
+// Prod: provider = "postgresql"
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql" // change to "sqlite" for local dev
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  passwordHash  String
+  role          Role      @default(USER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  bookings      Booking[] // one User has many Bookings
+
+  @@map("users")
+}
+
+model Car {
+  id            String    @id @default(cuid())
+  make          String
+  model         String
+  year          Int
+  pricePerDay   Float
+  imageUrl      String?
+  description   String?
+  available     Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  bookings      Booking[] // one Car has many Bookings
+
+  @@map("cars")
+}
+
+model Booking {
+  id          String        @id @default(cuid())
+  startDate   DateTime
+  endDate     DateTime
+  status      BookingStatus @default(PENDING)
+  totalPrice  Float
+  createdAt   DateTime      @default(now())
+
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  carId       String
+  car         Car           @relation(fields: [carId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([carId])
+  @@map("bookings")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
